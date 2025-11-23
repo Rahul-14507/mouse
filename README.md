@@ -14,10 +14,10 @@
 
 | Action | Gesture | Description |
 | :--- | :--- | :--- |
-| **Move Cursor** | **Index Finger** ☝️ | Point your index finger to move the mouse. |
+| **Move Cursor** | **Palm** 🤚 | Use your open Palm to move the mouse. |
 | **Left Click** | **Pinch (Index + Thumb)** 👌 | Pinch your index and thumb together quickly. |
 | **Drag** | **Pinch & Hold** 🤏 | Pinch and hold, then move your hand to drag. |
-| **Right Click** | **Pinch (Middle + Thumb)** 🖕 | Pinch your middle finger and thumb together. |
+| **Right Click** | **Pinch (Middle + Thumb)**  | Pinch your middle finger and thumb together. |
 | **Scroll** | **Peace Sign** ✌️ | Show two fingers and move your hand Up or Down. |
 | **Stop/Pause** | **Fist** ✊ | Close your hand into a fist to pause the camera. |
 
