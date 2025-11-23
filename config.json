@@ -1,0 +1,13 @@
+{
+    "frame_margin": 70,
+    "smoothening_fast": 2,
+    "smoothening_medium": 5,
+    "smoothening_slow": 7,
+    "click_threshold": 30,
+    "stabilize_threshold": 50,
+    "drag_threshold": 40,
+    "scroll_threshold": 15,
+    "scroll_enabled": true,
+    "right_click_enabled": true,
+    "enabled": true
+}
