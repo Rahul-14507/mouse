@@ -96,3 +96,8 @@ const rightClickToggle = document.getElementById('rightClickToggle');
 rightClickToggle.addEventListener('change', function(e) {
     pywebview.api.update_config('right_click_enabled', e.target.checked);
 });
+
+const cameraToggle = document.getElementById('cameraToggle');
+cameraToggle.addEventListener('change', function(e) {
+    pywebview.api.update_config('camera_feed_enabled', e.target.checked);
+});

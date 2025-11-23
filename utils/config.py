@@ -10,10 +10,11 @@ DEFAULT_CONFIG = {
     "smoothening_slow": 10,
     "click_threshold": 30,
     "stabilize_threshold": 50,
-    "drag_threshold": 40,
+    "drag_threshold": 30,
     "scroll_threshold": 15,
     "scroll_enabled": True,
     "right_click_enabled": True,
+    "camera_feed_enabled": False,
     "enabled": False # Start disabled by default
 }
 

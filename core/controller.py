@@ -53,6 +53,9 @@ class MouseController:
         pyautogui.FAILSAFE = False 
 
         mp_hands = mp.solutions.hands
+        mp_drawing = mp.solutions.drawing_utils
+        mp_drawing_styles = mp.solutions.drawing_styles
+        
         self.hands = mp_hands.Hands(
             model_complexity=0, 
             max_num_hands=1,
@@ -94,6 +97,8 @@ class MouseController:
             h, w, c = img.shape
             img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
             results = self.hands.process(img_rgb)
+            
+            # (Camera feed logic moved to end of loop)
             
             if results.multi_hand_landmarks:
                 for hand_landmarks in results.multi_hand_landmarks:
@@ -156,12 +161,13 @@ class MouseController:
                         move_dist = np.hypot(x_mapped - plocX, y_mapped - plocY)
                         
                         # Movement Deadzone (Anti-Jitter for stillness)
-                        if move_dist < 3: # Ignore micro-movements
+                        # Skip deadzone during drag for better responsiveness
+                        if move_dist < 3 and not is_left_clicking: # Ignore micro-movements
                             clocX, clocY = plocX, plocY
                             should_move = False
                         else:
                             if is_left_clicking:
-                                smoothening = 10 # Extra stable when dragging
+                                smoothening = 5 # Responsive during drag
                             elif move_dist > 50: 
                                 smoothening = self.config["smoothening_fast"]
                             elif move_dist > 20: 
@@ -169,7 +175,7 @@ class MouseController:
                             else: 
                                 smoothening = self.config["smoothening_slow"]
                             
-                            # Move
+                            # Always calculate new position
                             clocX = plocX + (x_mapped - plocX) / smoothening
                             clocY = plocY + (y_mapped - plocY) / smoothening
                             
@@ -180,10 +186,12 @@ class MouseController:
                             should_move = False
                             
                             if is_left_clicking:
-                                dist_from_anchor = np.hypot(clocX - anchor_x, clocY - anchor_y)
-                                if dist_from_anchor > self.config["drag_threshold"]:
+                                # Calculate distance from anchor using HAND position, not cursor
+                                hand_dist_from_anchor = np.hypot(x_mapped - anchor_x, y_mapped - anchor_y)
+                                if hand_dist_from_anchor > self.config["drag_threshold"]:
                                     drag_active = True
                                 
+                                # Move cursor only if drag is active
                                 if drag_active:
                                     should_move = True
                             else:
@@ -203,7 +211,7 @@ class MouseController:
                             if not is_left_clicking:
                                 pyautogui.mouseDown()
                                 is_left_clicking = True
-                                anchor_x, anchor_y = plocX, plocY 
+                                anchor_x, anchor_y = x_mapped, y_mapped 
                         else:
                             if is_left_clicking:
                                 pyautogui.mouseUp()
@@ -216,6 +224,63 @@ class MouseController:
                                 is_right_clicking = True
                                 time.sleep(0.2) 
                                 is_right_clicking = False 
+
+            # Draw skeleton if camera feed enabled (Moved here to have access to state vars)
+            if self.config.get("camera_feed_enabled", False):
+                status_text = "Idle"
+                if results.multi_hand_landmarks:
+                    for hand_landmarks in results.multi_hand_landmarks:
+                        h, w, c = img.shape
+                        
+                        # Helper to get coords
+                        def get_pt(idx):
+                            lm = hand_landmarks.landmark[idx]
+                            return int(lm.x * w), int(lm.y * h)
+
+                        # Draw Thumb, Index, Middle only
+                        connections = [
+                            (0, 1), (1, 2), (2, 3), (3, 4),   # Thumb
+                            (0, 5), (5, 6), (6, 7), (7, 8),   # Index
+                            (0, 9), (9, 10), (10, 11), (11, 12) # Middle
+                        ]
+                        
+                        # Draw Lines
+                        for start_idx, end_idx in connections:
+                            cv2.line(img, get_pt(start_idx), get_pt(end_idx), (0, 255, 0), 2)
+                        
+                        # Draw Joints
+                        for idx in [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]:
+                            cv2.circle(img, get_pt(idx), 4, (0, 255, 255), -1)
+
+                        # Visual Status Indicators
+                        if is_left_clicking:
+                            # Green dot between Index and Thumb
+                            ix, iy = get_pt(8)
+                            tx, ty = get_pt(4)
+                            cx, cy = (ix + tx) // 2, (iy + ty) // 2
+                            cv2.circle(img, (cx, cy), 10, (0, 255, 0), -1)
+                            status_text = "Dragging" if drag_active else "Locked"
+                        
+                        elif is_right_clicking:
+                            # Blue dot between Middle and Thumb
+                            mx, my = get_pt(12)
+                            tx, ty = get_pt(4)
+                            cx, cy = (mx + tx) // 2, (my + ty) // 2
+                            cv2.circle(img, (cx, cy), 10, (255, 0, 0), -1)
+                            status_text = "Right Click"
+                            
+                        elif should_move:
+                            status_text = "Moving"
+                        elif is_scroll_gesture:
+                            status_text = "Scrolling"
+
+                # Draw Status Text
+                cv2.putText(img, f"Status: {status_text}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+                
+                cv2.imshow('Antigravity Mouse - Camera Feed', img)
+                cv2.waitKey(1)
+            else:
+                cv2.destroyAllWindows() 
 
         # Cleanup
         if self.cap:
