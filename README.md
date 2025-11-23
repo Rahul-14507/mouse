@@ -1,4 +1,4 @@
-# Antigravity Mouse 🖱️✨
+# Antigravity Mouse 🖱️
 
 **Control your Windows PC with hand gestures. No mouse required.**
 
